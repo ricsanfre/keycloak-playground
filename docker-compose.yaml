@@ -1,44 +1,7 @@
+# This configuration assumes
+# Front-end and backend docker networks already created
+# Traefik already up and running connected to frontend network
 services:
-
-  # Securing docker.sock access
-  docker-proxy:
-    container_name: docker-proxy
-    environment:
-      CONTAINERS: 1
-    image: tecnativa/docker-socket-proxy
-    networks:
-      - backend
-    ports:
-      - 2375
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
-  # Traefik front-end
-  traefik:
-    depends_on:
-      - docker-proxy
-    image: traefik
-    container_name: traefik
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      frontend:
-        aliases:
-          - ${KEYCLOAK_URL}
-      backend:
-    ports:
-      - 80:80
-      - 443:443
-    environment:
-      - IONOS_API_KEY=${IONOS_API_KEY}
-    
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ./traefik/traefik.yml:/traefik.yml:ro
-      - ./traefik/acme.json:/acme.json
-      - ./traefik/access.log:/data/access.log
-  
   postgres:
     image: postgres:16.2
     container_name: postgres
@@ -62,12 +25,12 @@ services:
     container_name: keycloak
     command: start
     environment:
-      KC_HOSTNAME: ${KEYCLOAK_URL}
-      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      # KC_HOSTNAME_STRICT: false
       KC_PROXY_HEADERS: xforwarded
-      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: false
+      KC_HTTP_PORT: 8080
       KC_HTTP_ENABLED: true
-      KC_HOSTNAME_STRICT_HTTPS: false
       KC_HEALTH_ENABLED: true
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -80,22 +43,25 @@ services:
     restart: always
     depends_on:
       - postgres
-      - traefik
     networks:
-      frontend:
       backend:
+#        aliases:
+#        - ${KEYCLOAK_HOSTNAME}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.entrypoints=http"
-      - "traefik.http.routers.keycloak.rule=Host(`$KEYCLOAK_URL`)"
+      - "traefik.http.routers.keycloak.rule=Host(`$KEYCLOAK_HOSTNAME`)"
       - "traefik.http.middlewares.keycloak-https-redirect.redirectscheme.scheme=https"
       - "traefik.http.routers.keycloak.middlewares=keycloak-https-redirect"
       - "traefik.http.routers.keycloak-secure.entrypoints=https"
-      - "traefik.http.routers.keycloak-secure.rule=Host(`$KEYCLOAK_URL`)"
+      - "traefik.http.routers.keycloak-secure.rule=Host(`$KEYCLOAK_HOSTNAME`)"
       - "traefik.http.routers.keycloak-secure.tls=true"
       - "traefik.http.routers.keycloak-secure.tls.certresolver=ionos"
       - "traefik.http.routers.keycloak-secure.service=keycloak"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
+
   # backend:
   #   image: test-app:backend
   #   build: 
@@ -128,11 +94,11 @@ services:
     build: 
       context: ./ch4
     environment:
-      KC_URL: https://${KEYCLOAK_URL}
+      KC_URL: https://${KEYCLOAK_HOSTNAME}
     container_name: oidc-playground
     restart: unless-stopped
     networks:
-      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oidc-playground.entrypoints=http"
@@ -145,17 +111,19 @@ services:
       - "traefik.http.routers.oidc-playground-secure.tls.certresolver=ionos"
       - "traefik.http.routers.oidc-playground-secure.service=oidc-playground"
       - "traefik.http.services.oidc-playground.loadbalancer.server.port=8000"
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
 
   oauth2-playground-backend:
     image: oauth2-playground-backend
     build: 
       context: ./ch5/backend
     environment:
-      KC_URL: https://${KEYCLOAK_URL}
+      KC_URL: https://${KEYCLOAK_HOSTNAME}
     container_name: oauth2-playground-backend
     restart: unless-stopped
     networks:
-      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oauth2-playground-backend.entrypoints=http"
@@ -168,19 +136,22 @@ services:
       - "traefik.http.routers.oauth2-playground-backend-secure.tls.certresolver=ionos"
       - "traefik.http.routers.oauth2-playground-backend-secure.service=oauth2-playground-backend"
       - "traefik.http.services.oauth2-playground-backend.loadbalancer.server.port=3000"
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
+  
   oauth2-playground-frontend:
     image: oauth2-playground-frontend
     build: 
       context: ./ch5/frontend
     environment:
-      KC_URL: https://${KEYCLOAK_URL}
+      KC_URL: https://${KEYCLOAK_HOSTNAME}
       SERVICE_URL: https://${OAUTH_PLAYGROUND_BACKEND_URL}/secured
     container_name: oauth2-playground-frontend
     depends_on:
       - oauth2-playground-backend
     restart: unless-stopped
     networks:
-      - frontend
+      - backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.oauth2-playground-frontend.entrypoints=http"
@@ -200,6 +171,6 @@ volumes:
 
 networks:
   frontend:
-    driver: bridge
+    external: true
   backend:
-    driver: bridge
+    external: true
