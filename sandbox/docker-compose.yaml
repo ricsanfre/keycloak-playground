@@ -1,0 +1,131 @@
+services:
+
+  postgres:
+    image: postgres:16.2
+    container_name: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.5
+    container_name: keycloak
+    command: start
+    environment:
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: false
+      KC_HTTP_PORT: 8080
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      backend:
+#        aliases:
+#        - ${KEYCLOAK_HOSTNAME}
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
+
+  # backend:
+  #   image: test-app:backend
+  #   build: 
+  #     context: ./ch2/backend
+  #   container_name: test-app-backend
+  #   environment:
+  #     KC_URL: http://localhost:8080/auth
+  #   ports:
+  #     - 3000:3000
+  #   restart: unless-stopped
+  #   networks:
+  #     - frontend
+  # frontend:
+  #   image: test-app:frontend
+  #   build: 
+  #     context: ./ch2/frontend
+  #   environment:
+  #     KC_URL: http://localhost:8080
+  #     SERVICE_URL: http://localhost:3000
+  #   container_name: test-app-frontend
+  #   ports: 
+  #     - 8000:8000
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - frontend
+  oidc-playground:
+    image: oidc-playground
+    build: 
+      context: ../ch4
+    environment:
+      KC_URL: http://${KEYCLOAK_HOSTNAME}:8080
+    container_name: oidc-playground
+    restart: unless-stopped
+    ports:
+      - 8001:8000
+    networks:
+      - backend
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
+
+  oauth2-playground-backend:
+    image: oauth2-playground-backend
+    build: 
+      context: ../ch5/backend
+    environment:
+      KC_URL: http://${KEYCLOAK_HOSTNAME}:8080
+    container_name: oauth2-playground-backend
+    restart: unless-stopped
+    networks:
+      - backend
+    ports:
+      - 3000:3000
+    extra_hosts:
+     - ${KEYCLOAK_HOSTNAME}:host-gateway
+  
+  oauth2-playground-frontend:
+    image: oauth2-playground-frontend
+    build: 
+      context: ../ch5/frontend
+    environment:
+      KC_URL: http://${KEYCLOAK_HOSTNAME}:8080
+      SERVICE_URL: http://${KEYCLOAK_HOSTNAME}:3000/secured
+    container_name: oauth2-playground-frontend
+    depends_on:
+      - oauth2-playground-backend
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    networks:
+      - backend
+
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  frontend:
+    external: true
+  backend:
+    external: true
