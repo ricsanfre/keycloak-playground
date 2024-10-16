@@ -8,6 +8,8 @@ dns.setDefaultResultOrder('ipv4first');
 
 var app = express();
 
+function hasAccess(token, request){ return token.hasRole('resource-admin') || token.hasRole('resource-view'); } 
+
 const corsOptions = {
   origin: '*',// Enable CORS from any web
   optionsSuccessStatus: 200,
@@ -28,7 +30,7 @@ var keycloak = new Keycloak({ store: memoryStore });
 
 app.use(keycloak.middleware());
 
-app.get('/secured', keycloak.protect('realm:myrole'), cors(corsOptions), function (req, res) {
+app.get('/secured', keycloak.protect(hasAccess), cors(corsOptions), function (req, res) {
   res.setHeader('content-type', 'text/plain');
   res.send('Secret message!');
 });
