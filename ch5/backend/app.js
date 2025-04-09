@@ -8,7 +8,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 var app = express();
 
-function hasAccess(token, request){ return token.hasRole('resource-admin') || token.hasRole('resource-view'); } 
+function hasAccess(token, request){ return token.hasRole('oauth-backend:resource-admin') || token.hasRole('oauth-backend:resource-view'); } 
 
 const corsOptions = {
   origin: '*',// Enable CORS from any web

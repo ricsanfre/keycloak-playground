@@ -21,7 +21,7 @@ services:
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:25.0.5
+    image: quay.io/keycloak/keycloak:26.1.4
     container_name: keycloak
     command: start
     environment:
@@ -40,7 +40,7 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
     # ports:
     #   - 8080:8080
-    restart: always
+    restart: unless-stopped
     depends_on:
       - postgres
     networks:
@@ -48,19 +48,14 @@ services:
 #        aliases:
 #        - ${KEYCLOAK_HOSTNAME}
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.entrypoints=http"
-      - "traefik.http.routers.keycloak.rule=Host(`$KEYCLOAK_HOSTNAME`)"
-      - "traefik.http.middlewares.keycloak-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.keycloak.middlewares=keycloak-https-redirect"
-      - "traefik.http.routers.keycloak-secure.entrypoints=https"
-      - "traefik.http.routers.keycloak-secure.rule=Host(`$KEYCLOAK_HOSTNAME`)"
-      - "traefik.http.routers.keycloak-secure.tls=true"
-      - "traefik.http.routers.keycloak-secure.tls.certresolver=ionos"
-      - "traefik.http.routers.keycloak-secure.service=keycloak"
-      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
-    extra_hosts:
-     - ${KEYCLOAK_HOSTNAME}:host-gateway
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.entrypoints=websecure
+      - traefik.http.routers.keycloak.rule=Host(`$KEYCLOAK_HOSTNAME`)
+      - traefik.http.routers.keycloak.tls.certresolver=letsencrypt
+      - traefik.http.routers.keycloak.service=keycloak
+      - traefik.http.services.keycloak.loadbalancer.server.port=8080
+    # extra_hosts:
+    #  - ${KEYCLOAK_HOSTNAME}:host-gateway
 
   # backend:
   #   image: test-app:backend
@@ -101,18 +96,13 @@ services:
       - backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oidc-playground.entrypoints=http"
+      - "traefik.http.routers.oidc-playground.entrypoints=websecure"
       - "traefik.http.routers.oidc-playground.rule=Host(`$OIDC_PLAYGROUND_URL`)"
-      - "traefik.http.middlewares.oidc-playground-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.oidc-playground.middlewares=oidc-playground-https-redirect"
-      - "traefik.http.routers.oidc-playground-secure.entrypoints=https"
-      - "traefik.http.routers.oidc-playground-secure.rule=Host(`$OIDC_PLAYGROUND_URL`)"
-      - "traefik.http.routers.oidc-playground-secure.tls=true"
-      - "traefik.http.routers.oidc-playground-secure.tls.certresolver=ionos"
-      - "traefik.http.routers.oidc-playground-secure.service=oidc-playground"
+      - "traefik.http.routers.oidc-playground.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.oidc-playground.service=oidc-playground"
       - "traefik.http.services.oidc-playground.loadbalancer.server.port=8000"
-    extra_hosts:
-     - ${KEYCLOAK_HOSTNAME}:host-gateway
+    # extra_hosts:
+    #  - ${KEYCLOAK_HOSTNAME}:host-gateway
 
   oauth2-playground-backend:
     image: oauth2-playground-backend
@@ -126,18 +116,13 @@ services:
       - backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oauth2-playground-backend.entrypoints=http"
+      - "traefik.http.routers.oauth2-playground-backend.entrypoints=websecure"
       - "traefik.http.routers.oauth2-playground-backend.rule=Host(`$OAUTH_PLAYGROUND_BACKEND_URL`)"
-      - "traefik.http.middlewares.oauth2-playground-backend-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.oauth2-playground-backend.middlewares=oauth2-playground-backend-https-redirect"
-      - "traefik.http.routers.oauth2-playground-backend-secure.entrypoints=https"
-      - "traefik.http.routers.oauth2-playground-backend-secure.rule=Host(`$OAUTH_PLAYGROUND_BACKEND_URL`)"
-      - "traefik.http.routers.oauth2-playground-backend-secure.tls=true"
-      - "traefik.http.routers.oauth2-playground-backend-secure.tls.certresolver=ionos"
-      - "traefik.http.routers.oauth2-playground-backend-secure.service=oauth2-playground-backend"
+      - "traefik.http.routers.oauth2-playground-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.oauth2-playground-backend.service=oauth2-playground-backend"
       - "traefik.http.services.oauth2-playground-backend.loadbalancer.server.port=3000"
-    extra_hosts:
-     - ${KEYCLOAK_HOSTNAME}:host-gateway
+    # extra_hosts:
+    #  - ${KEYCLOAK_HOSTNAME}:host-gateway
   
   oauth2-playground-frontend:
     image: oauth2-playground-frontend
@@ -154,15 +139,10 @@ services:
       - backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oauth2-playground-frontend.entrypoints=http"
+      - "traefik.http.routers.oauth2-playground-frontend.entrypoints=websecure"
       - "traefik.http.routers.oauth2-playground-frontend.rule=Host(`$OAUTH_PLAYGROUND_FRONTEND_URL`)"
-      - "traefik.http.middlewares.oauth2-playground-frontend-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.oauth2-playground-frontend.middlewares=oauth2-playground-frontend-https-redirect"
-      - "traefik.http.routers.oauth2-playground-frontend-secure.entrypoints=https"
-      - "traefik.http.routers.oauth2-playground-frontend-secure.rule=Host(`$OAUTH_PLAYGROUND_FRONTEND_URL`)"
-      - "traefik.http.routers.oauth2-playground-frontend-secure.tls=true"
-      - "traefik.http.routers.oauth2-playground-frontend-secure.tls.certresolver=ionos"
-      - "traefik.http.routers.oauth2-playground-frontend-secure.service=oauth2-playground-frontend"
+      - "traefik.http.routers.oauth2-playground-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.oauth2-playground-frontend.service=oauth2-playground-frontend"
       - "traefik.http.services.oauth2-playground-frontend.loadbalancer.server.port=8000"
 
 volumes:

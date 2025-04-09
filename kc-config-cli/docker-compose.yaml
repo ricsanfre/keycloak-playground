@@ -1,0 +1,22 @@
+services:
+  keycloak-config-cli:
+    image: adorsys/keycloak-config-cli:latest
+    container_name: keycloak-config-cli
+    volumes:
+      - ./realm-config:/config
+    networks:
+      - frontend
+    environment:
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_USER: ${KEYCLOAK_USER}
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KEYCLOAK_AVAILABILITYCHECK_ENABLED: true
+      IMPORT_FILES_LOCATIONS: '/config/*'
+      IMPORT_VARSUBSTITUTION_ENABLED: true
+    env_file: ./.env
+
+networks:
+  frontend:
+    external: true
+  backend:
+    external: true
