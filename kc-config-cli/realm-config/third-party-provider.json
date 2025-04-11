@@ -1,0 +1,93 @@
+{
+  "enabled": true,
+  "realm": "third-party-provider",
+  "clients": [
+    {
+      "clientId": "broker-app",
+      "name": "",
+      "description": "",
+      "rootUrl": "https://keycloak.$(env:DOMAIN)/realms/myrealm/broker/oidc/endpoint",
+      "adminUrl": "https://keycloak.$(env:DOMAIN)/realms/myrealm/broker/oidc/endpoint",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "$(env:BROKER_CLIENT_SECRET)",
+      "redirectUris": [
+        "https://keycloak.$(env:DOMAIN)/realms/myrealm/broker/oidc/endpoint/*"
+      ],
+      "webOrigins": [
+        "https://keycloak.$(env:DOMAIN)"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1744289820",
+        "backchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "third-party-provider-group",
+      "path": "/third-party-provider-group",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {}
+    }
+  ],
+  "users": [
+    {
+      "username": "$(env:USER3PT_USERNAME)",
+      "firstName": "$(env:USER3PT_FIRSTNAME)",
+      "lastName": "$(env:USER3PT_LASTNAME)",
+      "email": "$(env:USER3PT_USERNAME)@$(env:DOMAIN)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+          {
+          "type": "password",
+          "value": "$(env:USER3PT_PASSWORD)"
+          }
+      ],
+      "realmRoles": [
+          "default-roles-third-party-provider"
+      ],
+      "groups": [
+          "third-party-provider-group"
+      ]
+      }
+  ]
+}
