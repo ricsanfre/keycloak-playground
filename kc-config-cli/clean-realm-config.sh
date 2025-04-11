@@ -1,7 +1,7 @@
 #!/bin/bash
 
-INPUT_FILE="myrealm.json"
-OUTPUT_FILE="myrealm-minimal.json"
+INPUT_FILE="$1.json"
+OUTPUT_FILE="$1-minimal.json"
 
 jq 'del(
   .id, .containerId, .accessTokenLifespanForImplicitFlow,
