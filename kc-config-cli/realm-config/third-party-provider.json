@@ -41,6 +41,24 @@
       "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": -1,
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "true",
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "lightweight.claim": "false",
+            "access.token.claim": "true",
+            "claim.name": "groups"
+          }
+        }
+      ],
       "defaultClientScopes": [
         "web-origins",
         "acr",
@@ -66,6 +84,14 @@
       "attributes": {},
       "realmRoles": [],
       "clientRoles": {}
+    },
+    {
+      "name": "third-party-provider-group-another",
+      "path": "/third-party-provider-group-another",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {}
     }
   ],
   "users": [
@@ -86,7 +112,8 @@
           "default-roles-third-party-provider"
       ],
       "groups": [
-          "third-party-provider-group"
+          "third-party-provider-group",
+          "third-party-provider-group-another"
       ]
       }
   ]

@@ -117,6 +117,7 @@
         "profile",
         "roles",
         "resource-view",
+        "resource-admin",
         "basic",
         "email"
       ],
@@ -221,12 +222,29 @@
         "roles": [
           "resource-view"
         ]
+      },
+      {
+        "clientScope": "resource-admin",
+        "roles": [
+          "resource-admin"
+        ]
       }
     ]
   },
   "clientScopes": [
     {
       "name": "resource-view",
+      "description": "",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": ""
+      }
+    },
+    {
+      "name": "resource-admin",
       "description": "",
       "protocol": "openid-connect",
       "attributes": {
@@ -268,6 +286,19 @@
       }
     }
   ],
+  "identityProviderMappers": [
+    {
+      "name": "third-party-group-mapper",
+      "identityProviderAlias": "oidc",
+      "identityProviderMapper": "oidc-advanced-group-idp-mapper",
+      "config": {
+        "claims": "[{\"key\":\"groups\",\"value\":\"/third-party-provider-group\"}]",
+        "syncMode": "INHERIT",
+        "are.claim.values.regex": "false",
+        "group": "/third-party-group"
+      }
+    }
+  ],
   "groups": [
     {
       "name": "mygroup",
@@ -278,6 +309,18 @@
       "clientRoles": {
         "oauth-backend": [
           "resource-view"
+        ]
+      }
+    },
+    {
+      "name": "third-party-group",
+      "path": "/third-party-group",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {
+        "oauth-backend": [
+          "resource-admin"
         ]
       }
     }
@@ -302,6 +345,6 @@
       "groups": [
           "mygroup"
       ]
-      }
+    }
   ]
 }
